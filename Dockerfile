@@ -1,20 +1,18 @@
-## Multi-stage build for Azure DevOps MCP Server (.NET 9)
-
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
 # Copy solution and project for layer caching
 COPY AzDevOpsMcp.sln ./
-COPY AzDevOpsMcp/AzDevOpsMcp.csproj AzDevOpsMcp/
+COPY src/AzDevOpsMcp/AzDevOpsMcp.csproj src/AzDevOpsMcp/
 
 # Restore
-RUN dotnet restore AzDevOpsMcp/AzDevOpsMcp.csproj
+RUN dotnet restore src/AzDevOpsMcp/AzDevOpsMcp.csproj
 
 # Copy source
 COPY . .
 
 # Publish
-RUN dotnet publish AzDevOpsMcp/AzDevOpsMcp.csproj -c Release -o /app/out
+RUN dotnet publish src/AzDevOpsMcp/AzDevOpsMcp.csproj -c Release -o /app/out
 
 FROM mcr.microsoft.com/dotnet/runtime:9.0 AS runtime
 WORKDIR /app

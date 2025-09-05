@@ -36,7 +36,7 @@ dotnet build AzDevOpsMcp.sln
 export AZDO_PAT="<your_pat>"
 export AZDO_ORG_URL="https://dev.azure.com/<org>"
 export AZDO_PROJECT="<project_name>" # optional, sets default project
-dotnet run --project AzDevOpsMcp/AzDevOpsMcp.csproj
+dotnet run --project src/AzDevOpsMcp/AzDevOpsMcp.csproj
 ```
 
 VS Code MCP
@@ -45,7 +45,7 @@ VS Code MCP
   "servers": {
     "az-devops": {
       "type": "stdio",
-      "command": "/full/path/to/AzDevOpsMcp/bin/Debug/net9.0/AzDevOpsMcp",
+      "command": "/full/path/to/src/AzDevOpsMcp/bin/Debug/net9.0/AzDevOpsMcp",
       "env": {
         "AZDO_PAT": "<your_pat>",
         "AZDO_PROJECT": "<project_name>",
@@ -61,7 +61,7 @@ Claude Desktop/ Claude Code
 {
   "mcpServers": {
     "az-devops": {
-      "command": "/full/path/to/AzDevOpsMcp/bin/Debug/net9.0/AzDevOpsMcp",
+      "command": "/full/path/to/src/AzDevOpsMcp/bin/Debug/net9.0/AzDevOpsMcp",
       "env": {
         "AZDO_PAT": "<your_pat>",
         "AZDO_PROJECT": "<project_name>",
