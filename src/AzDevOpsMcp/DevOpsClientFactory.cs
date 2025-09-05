@@ -3,7 +3,13 @@ using Microsoft.VisualStudio.Services.WebApi;
 
 namespace AzDevOps.McpServer;
 
-public class AzdoClientFactory : IAzdoClientFactory
+public interface IDevOpsClientFactory
+{
+    Task<VssConnection> GetConnectionAsync();
+    Task<T> GetClientAsync<T>() where T : VssHttpClientBase;
+}
+
+public class DevOpsClientFactory : IDevOpsClientFactory
 {
     private VssConnection? _cachedConnection;
 
@@ -29,7 +35,6 @@ public class AzdoClientFactory : IAzdoClientFactory
         var creds = new VssBasicCredential(string.Empty, pat);
         var connection = new VssConnection(new Uri(orgUrl), creds);
 
-        // Validate connection by fetching authorized user profile
         await connection.ConnectAsync();
 
         _cachedConnection = connection;

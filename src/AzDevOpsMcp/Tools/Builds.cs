@@ -13,7 +13,7 @@ public partial class Tools
         Idempotent = true,
         Destructive = false),
         Description("Lists build definitions (pipelines) in a project.")]
-    public async Task<AzdoOperationResult> ListBuildDefinitions(
+    public async Task<OperationResult> ListBuildDefinitions(
         [Description("Project name or id (opcional)")] string? project = null)
     {
         try
@@ -22,12 +22,12 @@ public partial class Tools
             var resolvedProject = RequireProjectOrDefault(project);
             var defs = await client.GetDefinitionsAsync(resolvedProject);
             var data = defs.Select(d => new { d.Id, d.Name, Path = d.Path }).ToList();
-            return new AzdoOperationResult(true, data: data);
+            return new OperationResult(true, data: data);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "ListBuildDefinitions failed: {Message}", ex.Message);
-            return new AzdoOperationResult(false, ex.Message);
+            return new OperationResult(false, ex.Message);
         }
     }
 
@@ -36,7 +36,7 @@ public partial class Tools
         ReadOnly = false,
         Destructive = false),
         Description("Queues a build for a given definition in a project.")]
-    public async Task<AzdoOperationResult> QueueBuild(
+    public async Task<OperationResult> QueueBuild(
         [Description("Build definition id")] int definitionId,
         [Description("Optional: Branch to build (e.g., refs/heads/main)")] string? sourceBranch = null,
         [Description("Project name or id (opcional)")] string? project = null)
@@ -53,12 +53,12 @@ public partial class Tools
             };
             var queued = await client.QueueBuildAsync(build, resolvedProject);
             var data = new { queued.Id, queued.BuildNumber, queued.Status, queued.Result, queued.SourceBranch, queued.QueueTime, DefinitionId = queued.Definition?.Id, DefinitionName = queued.Definition?.Name };
-            return new AzdoOperationResult(true, data: data);
+            return new OperationResult(true, data: data);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "QueueBuild failed: {Message}", ex.Message);
-            return new AzdoOperationResult(false, ex.Message);
+            return new OperationResult(false, ex.Message);
         }
     }
 }

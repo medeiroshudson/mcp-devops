@@ -14,7 +14,7 @@ public partial class Tools
         Idempotent = true,
         Destructive = false),
         Description("Executes a WIQL query and returns matching work item IDs and basic fields.")]
-    public async Task<AzdoOperationResult> QueryWorkItems(
+    public async Task<OperationResult> QueryWorkItems(
         [Description("WIQL query string")] string wiql,
         [Description("Optional: Max number of items to return (server-side)")] int? top = 50,
         [Description("Optional: Comma-separated list of fields to return (default: summary fields)")] string? fieldsCsv = null,
@@ -33,7 +33,7 @@ public partial class Tools
 
             if (ids.Count == 0)
             {
-                return new AzdoOperationResult(true, data: new { Count = 0, WorkItems = Array.Empty<object>() });
+                return new OperationResult(true, data: new { Count = 0, WorkItems = Array.Empty<object>() });
             }
 
             var defaultFields = new[]
@@ -72,12 +72,12 @@ public partial class Tools
                 WorkItems = items
             };
 
-            return new AzdoOperationResult(true, data: data);
+            return new OperationResult(true, data: data);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "QueryWorkItems failed: {Message}", ex.Message);
-            return new AzdoOperationResult(false, ex.Message);
+            return new OperationResult(false, ex.Message);
         }
     }
 
@@ -87,7 +87,7 @@ public partial class Tools
         Idempotent = true,
         Destructive = false),
         Description("Gets a single work item by id, including all fields and relations.")]
-    public async Task<AzdoOperationResult> GetWorkItem(
+    public async Task<OperationResult> GetWorkItem(
         [Description("Work item id")] int id)
     {
         try
@@ -102,12 +102,12 @@ public partial class Tools
                 Fields = wi.Fields,
                 Relations = wi.Relations?.Select(r => new { r.Rel, r.Url, r.Attributes })
             };
-            return new AzdoOperationResult(true, data: data);
+            return new OperationResult(true, data: data);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "GetWorkItem failed: {Message}", ex.Message);
-            return new AzdoOperationResult(false, ex.Message);
+            return new OperationResult(false, ex.Message);
         }
     }
 }

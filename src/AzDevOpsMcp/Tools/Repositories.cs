@@ -13,7 +13,7 @@ public partial class Tools
         Idempotent = true,
         Destructive = false),
         Description("Lists Git repositories for a given project.")]
-    public async Task<AzdoOperationResult> ListRepositories(
+    public async Task<OperationResult> ListRepositories(
         [Description("Project name or id (optional, usa padrão se definido)")] string? project = null)
     {
         try
@@ -22,12 +22,12 @@ public partial class Tools
             var resolvedProject = RequireProjectOrDefault(project);
             var repos = await client.GetRepositoriesAsync(resolvedProject);
             var data = repos.Select(r => new { r.Id, r.Name, r.ProjectReference, r.DefaultBranch, r.RemoteUrl }).ToList();
-            return new AzdoOperationResult(true, data: data);
+            return new OperationResult(true, data: data);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "ListRepositories failed: {Message}", ex.Message);
-            return new AzdoOperationResult(false, ex.Message);
+            return new OperationResult(false, ex.Message);
         }
     }
 }

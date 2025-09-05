@@ -15,9 +15,9 @@ internal class Program
             o.LogToStandardErrorThreshold = LogLevel.Trace;
         });
 
-        _ = builder.Services.AddSingleton<IAzdoClientFactory, AzdoClientFactory>();
-        _ = builder.Services.AddSingleton<IAzdoProjectContext, AzdoProjectContext>();
         _ = builder.Services.AddSingleton<Tools>();
+        _ = builder.Services.AddSingleton<IDevOpsClientFactory, DevOpsClientFactory>();
+        _ = builder.Services.AddSingleton<IDevOpsProjectContext, DevOpsProjectContext>();
 
         _ = builder.Services
             .AddMcpServer()
