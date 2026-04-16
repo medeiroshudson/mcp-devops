@@ -12,6 +12,27 @@ This is a .NET console application that implements a Model Context Protocol (MCP
   - Queue Build (optional `project`)
   - WIQL Query (optional `project`)
     - Parameters: `fieldsCsv` (fields), `includeRelations` (bool), `skip`/`pageSize` for paging; `top` default 50.
+    - Default response is compact and includes `totalMatched`, `returned`, `skip`, `pageSize`, `nextSkip`, `requestedFields`, `includeRelations`, `truncated`, `warnings`, and `workItems`.
+    - `top` and `pageSize` are capped at 200 to stay within Azure DevOps work item batch limits.
+  - My Work Items (optional `project`)
+    - Safe convenience query using `@Project` and `@Me`
+    - Optional `state`, `fieldsCsv`, `includeRelations`, `skip`, `pageSize`, `top`
+  - My User Stories (optional `project`)
+    - Safe convenience query using `@Project`, `@Me`, and `System.WorkItemType = 'User Story'`
+    - Optional `state`, `fieldsCsv`, `includeRelations`, `skip`, `pageSize`, `top`
+
+Notes:
+- `top` limits the WIQL result window before local paging.
+- `pageSize` and detail retrieval are capped at `200` to match Azure DevOps batch limits.
+- `warnings` is used for normalized inputs, empty pages, truncated WIQL windows, non-flat queries, or omitted IDs.
+- Non-flat WIQL queries return `relationReferences` and an empty `workItems` collection.
+
+## Validation
+
+```sh
+dotnet build AzDevOpsMcp.sln
+dotnet test AzDevOpsMcp.sln
+```
   - Get Work Item
   - Create Work Item (optional `project`)
   - Update Work Item
