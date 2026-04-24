@@ -20,6 +20,14 @@ This is a .NET console application that implements a Model Context Protocol (MCP
   - My User Stories (optional `project`)
     - Safe convenience query using `@Project`, `@Me`, and `System.WorkItemType = 'User Story'`
     - Optional `state`, `fieldsCsv`, `includeRelations`, `skip`, `pageSize`, `top`
+  - List Work Item Types (optional `project`)
+    - Returns the exact type names available for the target project's process
+  - Create Work Item (optional `project`)
+    - MCP-friendly parameters: `type`, `title`, optional `description`, optional `fieldsJson`, optional `validateOnly`
+    - Resolves generic backlog aliases like `User Story` to the project's actual requirement type when needed
+  - Update Work Item (optional `project`)
+    - MCP-friendly parameters: `id`, optional `title`, optional `description`, optional `history`, optional `fieldsJson`, optional `rev`, optional `validateOnly`
+    - Supports optimistic concurrency with `rev`
 
 Notes:
 - `top` limits the WIQL result window before local paging.
@@ -33,9 +41,52 @@ Notes:
 dotnet build AzDevOpsMcp.sln
 dotnet test AzDevOpsMcp.sln
 ```
-  - Get Work Item
-  - Create Work Item (optional `project`)
-  - Update Work Item
+
+## Mutation tools
+
+### List valid types first
+
+Use `ListWorkItemTypes` to discover the exact work item type names available in the target project.
+
+### Create a work item
+
+Minimal example:
+
+```json
+{
+  "project": "WAPP",
+  "type": "User Story",
+  "title": "Criar integração com VAN X",
+  "description": "Criada via MCP",
+  "fieldsJson": "{\"Microsoft.VSTS.Common.Priority\":1}"
+}
+```
+
+Notes:
+- `title` is required.
+- `fieldsJson` must be a JSON object using Azure DevOps field reference names.
+- If the project does not use Agile, a generic request like `User Story` is resolved to the project's requirement/backlog type when possible.
+- Use `validateOnly=true` to preflight the payload without saving.
+
+### Update a work item
+
+Example:
+
+```json
+{
+  "id": 12345,
+  "project": "WAPP",
+  "title": "Novo título",
+  "history": "Atualizado via MCP",
+  "fieldsJson": "{\"System.State\":\"Active\"}",
+  "rev": 7
+}
+```
+
+Notes:
+- Provide at least one change.
+- `rev` adds a `test /rev` patch operation to avoid overwriting newer revisions.
+- Error messages are sanitized and designed to point to the likely cause: invalid type, missing required fields, invalid values, or missing permissions.
 
 ## Getting Started
 
