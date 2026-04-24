@@ -163,6 +163,8 @@ args = [
 Notes
 - Ensure the PAT scopes align with the tools you plan to use.
 - For on-prem TFS/Azure DevOps Server, set `AZDO_ORG_URL` to your collection URL.
+- Default project resolution precedence is: explicit tool `project` parameter -> `AZDO_PROJECT` -> startup argument `--project`.
+- If `AZDO_PROJECT` or `--project` is configured, project-aware tools automatically target that project when `project` is omitted.
 
 Additional Docs
 - Docker: see `docs/docker.md`
