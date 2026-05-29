@@ -91,7 +91,7 @@ Notes:
 ## Getting Started
 
 ### Prerequisites
-- .NET 9 SDK (stdio) or Docker
+- .NET 10 SDK (stdio) or Docker
 - Azure DevOps organization URL (e.g., https://dev.azure.com/<org>)
 - Personal Access Token (PAT) with appropriate scopes (e.g., Project and Team, Work Items (Read/Write), Build (Read/Execute), Code (Read))
 
@@ -117,7 +117,7 @@ VS Code MCP
   "servers": {
     "az-devops": {
       "type": "stdio",
-      "command": "/full/path/to/src/AzDevOpsMcp/bin/Debug/net9.0/AzDevOpsMcp",
+      "command": "/full/path/to/src/AzDevOpsMcp/bin/Debug/net10.0/AzDevOpsMcp",
       "env": {
         "AZDO_PAT": "<your_pat>",
         "AZDO_PROJECT": "<project_name>",
@@ -133,7 +133,7 @@ Claude Desktop/ Claude Code
 {
   "mcpServers": {
     "az-devops": {
-      "command": "/full/path/to/src/AzDevOpsMcp/bin/Debug/net9.0/AzDevOpsMcp",
+      "command": "/full/path/to/src/AzDevOpsMcp/bin/Debug/net10.0/AzDevOpsMcp",
       "env": {
         "AZDO_PAT": "<your_pat>",
         "AZDO_PROJECT": "<project_name>",

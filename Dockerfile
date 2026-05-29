@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Copy solution and project for layer caching
@@ -14,7 +14,7 @@ COPY . .
 # Publish
 RUN dotnet publish src/AzDevOpsMcp/AzDevOpsMcp.csproj -c Release -o /app/out
 
-FROM mcr.microsoft.com/dotnet/runtime:9.0 AS runtime
+FROM mcr.microsoft.com/dotnet/runtime:10.0 AS runtime
 WORKDIR /app
 
 # Defaults; override at runtime
