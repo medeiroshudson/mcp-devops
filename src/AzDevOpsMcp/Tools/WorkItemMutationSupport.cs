@@ -7,6 +7,8 @@ namespace AzDevOps.McpServer;
 
 internal static class WorkItemMutationSupport
 {
+    private const string ParentRelationType = "System.LinkTypes.Hierarchy-Reverse";
+
     private static readonly string[] RequirementTypePreferenceOrder =
     {
         "User Story",
@@ -61,54 +63,98 @@ internal static class WorkItemMutationSupport
         throw new ArgumentException($"Work item type '{requestedType}' is not valid for the target project. Use ListWorkItemTypes to inspect available types.");
     }
 
-    public static IReadOnlyDictionary<string, object?> BuildCreateFields(string title, string? description, string? fieldsJson)
+    public static IReadOnlyDictionary<string, object?> BuildFields(
+        IReadOnlyDictionary<string, JsonElement>? fields,
+        string? history = null,
+        bool allowEmpty = false)
     {
-        if (string.IsNullOrWhiteSpace(title))
+        var result = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+
+        if (fields is not null)
         {
-            throw new ArgumentException("Title is required to create a work item.");
-        }
-
-        var fields = new Dictionary<string, object?>(ParseFieldsJson(fieldsJson), StringComparer.OrdinalIgnoreCase)
-        {
-            ["System.Title"] = title.Trim()
-        };
-
-        if (!string.IsNullOrWhiteSpace(description))
-        {
-            fields["System.Description"] = description.Trim();
-        }
-
-        return fields;
-    }
-
-    public static IReadOnlyDictionary<string, object?> BuildUpdateFields(string? title, string? description, string? history, string? fieldsJson)
-    {
-        var fields = new Dictionary<string, object?>(ParseFieldsJson(fieldsJson), StringComparer.OrdinalIgnoreCase);
-
-        if (!string.IsNullOrWhiteSpace(title))
-        {
-            fields["System.Title"] = title.Trim();
-        }
-
-        if (!string.IsNullOrWhiteSpace(description))
-        {
-            fields["System.Description"] = description.Trim();
+            foreach (var field in fields)
+            {
+                result[field.Key] = ConvertJsonElement(field.Value);
+            }
         }
 
         if (!string.IsNullOrWhiteSpace(history))
         {
-            fields["System.History"] = history.Trim();
+            result["System.History"] = history.Trim();
         }
 
-        if (fields.Count == 0)
+        if (result.Count == 0 && !allowEmpty)
         {
-            throw new ArgumentException("At least one field change is required to update a work item.");
+            throw new ArgumentException("At least one field is required. Pass a JSON object with field reference names as keys, e.g. {\"System.Title\":\"My title\"}.");
         }
 
-        return fields;
+        return result;
     }
 
-    public static JsonPatchDocument ToPatchDocument(IReadOnlyDictionary<string, object?> fields, int? rev = null)
+    public static void ValidateParentId(int parentId, int? childId = null)
+    {
+        if (parentId <= 0)
+        {
+            throw new ArgumentException("parentId must be greater than zero.");
+        }
+
+        if (childId.HasValue && parentId == childId.Value)
+        {
+            throw new ArgumentException("A work item cannot be its own parent.");
+        }
+    }
+
+    public static void ValidateWorkItemId(int id)
+    {
+        if (id <= 0)
+        {
+            throw new ArgumentException("Work item id must be greater than zero.");
+        }
+    }
+
+    public static void ValidateRevision(int? expectedRevision, int? actualRevision = null)
+    {
+        if (expectedRevision < 0)
+        {
+            throw new ArgumentException("rev must be zero or greater.");
+        }
+
+        if (expectedRevision.HasValue && actualRevision.HasValue && expectedRevision.Value != actualRevision.Value)
+        {
+            throw new ArgumentException($"Revision guard '{expectedRevision.Value}' does not match the current revision '{actualRevision.Value}'.");
+        }
+    }
+
+    public static bool ShouldAddParentRelation(IReadOnlyList<WorkItemRelation>? relations, string parentUrl)
+    {
+        if (string.IsNullOrWhiteSpace(parentUrl))
+        {
+            throw new ArgumentException("The parent work item URL is required.");
+        }
+
+        var currentParent = relations?.FirstOrDefault(relation =>
+            string.Equals(relation.Rel, ParentRelationType, StringComparison.OrdinalIgnoreCase));
+
+        if (currentParent is null)
+        {
+            return true;
+        }
+
+        if (string.Equals(
+            currentParent.Url?.TrimEnd('/'),
+            parentUrl.TrimEnd('/'),
+            StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        throw new ArgumentException("The work item already has a different parent. Remove or replace that relation explicitly before assigning a new parent.");
+    }
+
+    public static JsonPatchDocument ToPatchDocument(
+        IReadOnlyDictionary<string, object?> fields,
+        int? rev = null,
+        string? parentUrl = null)
     {
         var patch = new JsonPatchDocument();
 
@@ -129,6 +175,20 @@ internal static class WorkItemMutationSupport
                 Operation = Operation.Add,
                 Path = "/fields/" + field.Key,
                 Value = field.Value
+            });
+        }
+
+        if (!string.IsNullOrWhiteSpace(parentUrl))
+        {
+            patch.Add(new JsonPatchOperation
+            {
+                Operation = Operation.Add,
+                Path = "/relations/-",
+                Value = new WorkItemRelation
+                {
+                    Rel = ParentRelationType,
+                    Url = parentUrl
+                }
             });
         }
 
@@ -190,34 +250,6 @@ internal static class WorkItemMutationSupport
         }
 
         return $"Unable to update work item '{workItemId}' in project '{project}'. Verify the work item exists, the provided revision guard is current, the updated fields are valid, and the PAT has work item write permission.";
-    }
-
-    public static IReadOnlyDictionary<string, object?> ParseFieldsJson(string? fieldsJson)
-    {
-        if (string.IsNullOrWhiteSpace(fieldsJson))
-        {
-            return new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
-        }
-
-        try
-        {
-            using var document = JsonDocument.Parse(fieldsJson);
-            if (document.RootElement.ValueKind != JsonValueKind.Object)
-            {
-                throw new ArgumentException("fieldsJson must be a JSON object with field reference names as keys.");
-            }
-
-            return document.RootElement
-                .EnumerateObject()
-                .ToDictionary(
-                    property => property.Name,
-                    property => ConvertJsonElement(property.Value),
-                    StringComparer.OrdinalIgnoreCase);
-        }
-        catch (JsonException)
-        {
-            throw new ArgumentException("fieldsJson must be valid JSON.");
-        }
     }
 
     private static object? ConvertJsonElement(JsonElement element) => element.ValueKind switch

@@ -23,11 +23,11 @@ This is a .NET console application that implements a Model Context Protocol (MCP
   - List Work Item Types (optional `project`)
     - Returns the exact type names available for the target project's process
   - Create Work Item (optional `project`)
-    - MCP-friendly parameters: `type`, `title`, optional `description`, optional `fieldsJson`, optional `validateOnly`
+    - MCP-friendly parameters: `type`, `fields`, optional `parentId`, optional `validateOnly`
     - Resolves generic backlog aliases like `User Story` to the project's actual requirement type when needed
   - Update Work Item (optional `project`)
-    - MCP-friendly parameters: `id`, optional `title`, optional `description`, optional `history`, optional `fieldsJson`, optional `rev`, optional `validateOnly`
-    - Supports optimistic concurrency with `rev`
+    - MCP-friendly parameters: `id`, optional `fields`, optional `history`, optional `parentId`, optional `rev`, optional `validateOnly`
+    - Supports optimistic concurrency with `rev` and idempotent parent assignment
 
 Notes:
 - `top` limits the WIQL result window before local paging.
@@ -56,15 +56,19 @@ Minimal example:
 {
   "project": "WAPP",
   "type": "User Story",
-  "title": "Criar integração com VAN X",
-  "description": "Criada via MCP",
-  "fieldsJson": "{\"Microsoft.VSTS.Common.Priority\":1}"
+  "fields": {
+    "System.Title": "Criar integração com VAN X",
+    "System.Description": "Criada via MCP",
+    "Microsoft.VSTS.Common.Priority": 1
+  },
+  "parentId": 12345
 }
 ```
 
 Notes:
-- `title` is required.
-- `fieldsJson` must be a JSON object using Azure DevOps field reference names.
+- `fields` must be a JSON object using Azure DevOps field reference names.
+- `System.Title` is required by Azure DevOps when creating a work item.
+- `parentId` creates a `System.LinkTypes.Hierarchy-Reverse` relation using the canonical parent work-item URL.
 - If the project does not use Agile, a generic request like `User Story` is resolved to the project's requirement/backlog type when possible.
 - Use `validateOnly=true` to preflight the payload without saving.
 
@@ -76,16 +80,21 @@ Example:
 {
   "id": 12345,
   "project": "WAPP",
-  "title": "Novo título",
+  "fields": {
+    "System.Title": "Novo título",
+    "System.State": "Active"
+  },
   "history": "Atualizado via MCP",
-  "fieldsJson": "{\"System.State\":\"Active\"}",
+  "parentId": 10000,
   "rev": 7
 }
 ```
 
 Notes:
-- Provide at least one change.
+- Provide at least one field, a history entry, or `parentId`.
 - `rev` adds a `test /rev` patch operation to avoid overwriting newer revisions.
+- Reapplying the same `parentId` is idempotent. Assigning a different parent is rejected instead of implicitly reparenting the work item.
+- Parent links are relations; do not send `System.Parent` in `fields`.
 - Error messages are sanitized and designed to point to the likely cause: invalid type, missing required fields, invalid values, or missing permissions.
 
 ## Getting Started
