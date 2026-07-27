@@ -153,20 +153,39 @@ Claude Desktop/ Claude Code
 }
 ```
 
-OpenAI Codex
+OpenAI Codex (GitHub Container Registry)
 ```toml
 [mcp_servers.az-devops]
 command = "docker"
 args = [
-  "run", 
+  "run",
   "-i",
   "--rm",
   "--name", "az-devops",
   "-e", "AZDO_PAT=<your_pat>",
   "-e", "AZDO_PROJECT=<project_name>",
   "-e", "AZDO_ORG_URL=https://dev.azure.com/<org>",
-  "medeiroshudson/azdevops-mcp:latest"
+  "ghcr.io/medeiroshudson/mcp-devops:main"
 ]
+```
+
+Claude Desktop/Claude Code and VS Code can use the same `docker run` command with a stdio MCP configuration:
+
+```json
+{
+  "mcpServers": {
+    "az-devops": {
+      "command": "docker",
+      "args": [
+        "run", "-i", "--rm",
+        "-e", "AZDO_PAT=<your_pat>",
+        "-e", "AZDO_PROJECT=<project_name>",
+        "-e", "AZDO_ORG_URL=https://dev.azure.com/<org>",
+        "ghcr.io/medeiroshudson/mcp-devops:main"
+      ]
+    }
+  }
+}
 ```
 
 Notes
@@ -177,4 +196,4 @@ Notes
 
 Additional Docs
 - Docker: see `docs/docker.md`
-- CI/CD (GitHub Actions → Docker Hub): see `docs/ci-cd.md`
+- CI/CD (GitHub Actions → GitHub Container Registry): see `docs/ci-cd.md`
